@@ -1,0 +1,48 @@
+{
+  "supply":
+  [
+    {
+      "material_id": "productA",
+      "node_id": "НПЗ",
+      "min": 0,
+      "max": 10000,
+      "cost": 50
+    }
+  ],
+  "demand":
+  [
+    {
+      "material_id": "productA",
+      "node_id": "Сбыт1",
+      "min": 0,
+      "max": 10000,
+      "price": 200
+    },
+    {
+      "material_id": "productA",
+      "node_id": "Сбыт2",
+      "min": 0,
+      "max": 10000,
+      "price": 200
+    }
+  ],
+  "transport":
+  [
+    {
+      "material_id": "productA",
+      "from_node_id": "НПЗ",
+      "to_node_id": "Сбыт1",
+      "min": 0,
+      "max": 10000,
+      "cost": 10
+    },
+    {
+      "material_id": "productA",
+      "from_node_id": "НПЗ",
+      "to_node_id": "Сбыт2",
+      "min": 0,
+      "max": 10000,
+      "cost": 10
+    }
+  ]
+}
