@@ -305,11 +305,12 @@ def solve_mock(demand_d1, demand_d2, production_p1, production_p2):
 app = Dash(__name__, suppress_callback_exceptions=True)
 
 with open("input_data/input_data.json", "r", encoding="utf-8") as file:
-    data = json.load(file)
+    main_data = json.load(file)
 
-app.layout = build_layout(data)
+print("=" * 50)
+app.layout = build_layout(main_data)
 
-optimization_callback(app)
+optimization_callback(app=app, main_data=main_data)
 
 # @app.callback(
     # Output("network-container", "children"),

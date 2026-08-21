@@ -1,16 +1,16 @@
-from dataclasses import dataclass
-from typing import Dict, Tuple
+from dataclasses import dataclass, field
+import pandas as pd
 
 @dataclass
 class OptimizationInput:
-    supply_min: Dict[Tuple[str], float]
-    supply_max: Dict[Tuple[str], float]
-    supply_cost: Dict[Tuple[str], float]
+    supply_min: pd.DataFrame = field(default_factory=pd.DataFrame)
+    supply_max: pd.DataFrame = field(default_factory=pd.DataFrame)
+    supply_cost: pd.DataFrame = field(default_factory=pd.DataFrame)
 
-    demand_min: Dict[Tuple[str], float]
-    demand_max: Dict[Tuple[str], float]
-    demand_price: Dict[Tuple[str], float]
+    demand_min: pd.DataFrame = field(default_factory=pd.DataFrame)
+    demand_max: pd.DataFrame = field(default_factory=pd.DataFrame)
+    demand_price: pd.DataFrame = field(default_factory=pd.DataFrame)
 
-    transport_min: Dict[Tuple[str], float]
-    transport_max: Dict[Tuple[str], float]
-    transport_cost: Dict[Tuple[str], float]
+    transport_min: pd.DataFrame = field(default_factory=pd.DataFrame)
+    transport_max: pd.DataFrame = field(default_factory=pd.DataFrame)
+    transport_cost: pd.DataFrame = field(default_factory=pd.DataFrame)

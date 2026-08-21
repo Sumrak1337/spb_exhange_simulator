@@ -1,5 +1,4 @@
 from dash import html, dcc
-from ui.components.parameters import main_parameter_row
 from typing import Dict, Any
 
 def build_layout(data: Dict[str, Any]):
@@ -334,26 +333,33 @@ def build_supply_section(data: Dict[str, Any], entity: str):
                                 "marginBottom": "15px",
                             }),
                 dcc.RangeSlider(
+                    id={
+                        "type": "supply-range-slider",
+                        "s": item['material_id'],
+                        "n": item['node_id'],
+                    },
                     min=item["min"],
                     max=item["max"],
-                    value=[item["min"], item["max"]]
+                    value=[item["min"], item["max"]],
+                    tooltip={
+                        'placement': 'top',
+                        'always_visible': False,
+                        'template': '{value}'
+                    },
                 ),
-                html.Div("Cost", style={
-                    "textAlign": "left",
-                    "color": "#475569",
-                    "marginBottom": "15px",
-                    "fontWeight": "bold",
-                }),
                 dcc.Input(
+                    id={
+                        "type": "supply-number-input",
+                        "s": item['material_id'],
+                        "n": item['node_id'],
+                    },
                     type="number",
                     min=0,
                     max=1e4,
-                    step=50,
-                    value=item["cost"]
+                    placeholder="Cost"
                 )
             ]),
         )
-        break
 
     return html.Div(
         [
@@ -374,22 +380,30 @@ def build_demand_section(data: Dict[str, Any], entity: str):
                                 "marginBottom": "15px",
                             }),
                 dcc.RangeSlider(
+                    id={
+                        "type": "demand-range-slider",
+                        "s": item["material_id"],
+                        "n": item["node_id"],
+                    },
                     min=item["min"],
                     max=item["max"],
-                    value=[item["min"], item["max"]]
+                    value=[item["min"], item["max"]],
+                    tooltip={
+                        'placement': 'top',
+                        'always_visible': False,
+                        'template': '{value}'
+                    },
                 ),
-                html.Div("Price", style={
-                    "textAlign": "left",
-                    "color": "#475569",
-                    "marginBottom": "15px",
-                    "fontWeight": "bold",
-                }),
                 dcc.Input(
+                    id={
+                        "type": "demand-number-input",
+                        "s": item["material_id"],
+                        "n": item["node_id"],
+                    },
                     type="number",
                     min=0,
                     max=1e4,
-                    step=100,
-                    value=item["price"],
+                    placeholder="Price",
                     style={"marginBottom": "15px"}
                 ),
             ]),
