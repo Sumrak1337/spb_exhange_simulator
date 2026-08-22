@@ -1,0 +1,73 @@
+[project]
+name = "spb_exchange_simulator"
+version = "0.0.1"
+description = "Simulator for Birzha"
+authors = [
+    { name = "Polyakov Ivan" },
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "mypy",
+    "isort",
+    "pylint"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# black
+[tool.black]
+line-length = 79
+target-version = ["py312"]
+
+# isort
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 79
+
+# pylint
+[tool.pylint.MASTER]
+extension-pkg-whitelist = []
+disable = [
+    "C0114", # missing-module-docstring
+    "C0115", # missing-class-docstring
+    "C0116", # missing-function-docstring
+]
+min-similarity-lines = 10
+ignore-paths = ["opora_pyomo_model/data/.*$"]
+
+[tool.pylint.TYPECHECK]
+ignored-modules = []
+generated-members = []
+
+[tool.pylint.FORMAT]
+max-line-length = 79
+max-attributes = 30
+max-public-methods = 30
+max-args = 15
+max-locals = 25
+max-branches = 20
+min-public-methods = 0
+variable-rgx = ["(.*[a-z][a-z0-9_]{1,30}|[a-z_])+$"]
+argument-rgx = ["(.*[a-z][a-z0-9_]{1,30}|[a-z_])+$"]
+attr-rgx = ["(.*[a-z][a-z0-9_]{1,30}|[a-z_])+$"]
+
+[tool.pylint.SIMILARITIES]
+min-similarity-lines = 10
+
+[tool.pylint.DESIGN]
+max-parents = 10
+
+# mypy
+[tool.mypy]
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
