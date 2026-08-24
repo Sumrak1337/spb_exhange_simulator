@@ -1,6 +1,8 @@
 import pandas as pd
-from dash import Dash, Input, Output, ALL, State
+from dash import Dash, Input, Output, ALL, State, dcc
 import dash_cytoscape as cyto
+import pyomo.environ as pyo
+import numpy as np
 
 from domain.data import OptimizationInput
 from typing import Dict, Any
@@ -9,102 +11,78 @@ from optimization.solver import SolverManager
 
 def make_stylesheet(result):
 
-    stylesheet = [
-        # ----------------------------------------------------
-        # Nodes
-        # ----------------------------------------------------
-        {
-            "selector": "node",
-            "style": {
-                "label": "data(label)",
-                "width": 70,
-                "height": 70,
-                "font-size": "13px",
-                "text-valign": "center",
-                "text-halign": "center",
-                "color": "white",
-                "font-weight": "bold",
-                "border-width": 2,
-                "border-color": "#ffffff",
-            },
+    stylesheet = [{
+        "selector": "node",
+        "style": {
+            "content": "data(label)",
+            "width": 70,
+            "height": 70,
+            "text-wrap": "wrap",
+            "font-size": "10px",
+            "text-valign": "center",
+            "text-halign": "center",
+            "color": "black",
+            "font-weight": "bold",
+            "label-font": "sans-serif"
         },
-
-        {
-            "selector": '[type = "production"]',
-            "style": {
-                "background-color": "#2563eb",
-                "shape": "rectangle",
-            },
+    }, {
+        "selector": '[type = "production"]',
+        "style": {
+            "background-color": "#2CA02C",
+            "shape": "rectangle",
         },
-
-        {
-            "selector": '[type = "transfer"]',
-            "style": {
-                "background-color": "#f59e0b",
-                "shape": "diamond",
-            },
+    }, {
+        "selector": '[type = "demand"]',
+        "style": {
+            "background-color": "#D62728",
+            "shape": "ellipse",
         },
-
-        {
-            "selector": '[type = "demand"]',
-            "style": {
-                "background-color": "#16a34a",
-                "shape": "ellipse",
-            },
+    }, {
+        "selector": "edge",
+        "style": {
+            "curve-style": "bezier",
+            "target-arrow-shape": "triangle",
+            "line-color": "#9467BD",
+            "target-arrow-color": "#9467BD",
+            "arrow-scale": 0.75,
+            "label": "data(label)",
+            "font-size": "11px",
+            "text-background-color": "#ffffff",
+            "text-background-opacity": 0.5,
+            "text-background-padding": "3px",
         },
-
-        # ----------------------------------------------------
-        # Edges
-        # ----------------------------------------------------
-        {
-            "selector": "edge",
-            "style": {
-                "curve-style": "bezier",
-                "target-arrow-shape": "triangle",
-                "arrow-scale": 1.2,
-                "label": "data(label)",
-                "font-size": "11px",
-                "text-background-color": "#ffffff",
-                "text-background-opacity": 0.9,
-                "text-background-padding": "3px",
-            },
-        },
-    ]
-
-    # Individual edge styling
-    for flow in result["flows"]:
-        color = "tab:green"
-        # color = get_edge_color(
-        #     flow["flow"],
-        #     flow["capacity"],
-        # )
-
-        # Minimum width so zero flows remain visible
-        width = max(
-            2,
-            min(
-                16,
-                2 + 14 * flow["flow"] / flow["capacity"]
-            ),
-        )
-
-        stylesheet.append(
-            {
-                "selector": f'#{flow["id"]}',
-                "style": {
-                    "line-color": color,
-                    "target-arrow-color": color,
-                    "width": width,
-                },
-            }
-        )
+    }]
 
     return stylesheet
 
+def make_elements(result):
+    # TODO: make via nodes, not variables
+    import random
+    random.seed(42)
+
+    elements = []
+    for i, ((s, n), value) in enumerate(result["supply"].items()):
+        elements.append({"data": {"id": f"{s}|{n}", "material": s, "label": n, "type": "production", "value": value}, "position": {"x": 0, "y": 100 * i}})
+    for i, ((s, n), value) in enumerate(result["demand"].items()):
+        elements.append({"data": {"id": f"{s}|{n}", "material": s, "label": n, "type": "demand", "value": value}, "position": {"x": 200, "y": 100 * i}})
+
+    for (s, n1, n2), value in result["transport"].items():
+        elements.append(
+            {
+                "data": {
+                    "id": f"{s}{n1}-{n2}",
+                    "source": f"{s}|{n1}",
+                    "target": f"{s}|{n2}",
+                    "label": f'{value:,.0f} тонн',
+                }
+            }
+        )
+
+    return elements
 
 def optimization_callback(app: Dash, main_data: Dict[str, Any]):
     @app.callback(
-        # Output("network-container", "value"),
+        Output("network-container", "children"),
         Input({"type": "supply-range-slider", "s": ALL, "n": ALL}, "value"),
         Input({"type": "demand-range-slider", "s": ALL, "n": ALL}, "value"),
         Input({"type": "supply-number-input", "s": ALL, "n": ALL}, "value"),
@@ -113,6 +91,7 @@ def optimization_callback(app: Dash, main_data: Dict[str, Any]):
         State({"type": "demand-range-slider", "s": ALL, "n": ALL}, "id"),
         State({"type": "supply-number-input", "s": ALL, "n": ALL}, "id"),
         State({"type": "demand-number-input", "s": ALL, "n": ALL}, "id"),
+        Input("view-mode", "value")
     )
     def optimization(
         supply_bounds,
@@ -123,8 +102,10 @@ def optimization_callback(app: Dash, main_data: Dict[str, Any]):
         demand_bounds_ids,
         supply_cost_ids,
         demand_price_ids,
+        view_mode,
     ):
         # Data creation
+        # TODO: to separate function
         data = OptimizationInput()
 
         demand_min = []
@@ -175,23 +156,31 @@ def optimization_callback(app: Dash, main_data: Dict[str, Any]):
         solver = SolverManager()
         solver.solve(model=model)
 
-        model.pprint()
+        # Result extracting
+        result = {"supply": {k: pyo.value(v) for k, v in model.supply.items()},
+                  "demand": {k: pyo.value(v) for k, v in model.demand.items()},
+                  "transport": {k: pyo.value(v) for k, v in model.transport.items()},
+                  "distress_sale": {k: pyo.value(v) for k, v in
+                                    model.distress_sale.items()},
+                  "distress_purchase": {k: pyo.value(v) for k, v in
+                                        model.distress_purchase.items()}}
 
-        # data_preprocessing(supply_bounds, supply_bounds_ids, demand_bounds, demand_bounds_ids, supply_cost, supply_cost_ids, demand_price, demand_price_ids, data)
+        if view_mode == "network":
+            network = cyto.Cytoscape(
+                id="cytoscape-network",
+                elements=make_elements(result),
+                stylesheet=make_stylesheet(result),
+                layout={
+                    "name": "preset",
+                },
+                style={
+                    "width": "100%",
+                    "height": "550px",
+                    "backgroundColor": "#ffffff",
+                },
+            )
+        else:
+            # Future sankey realization
+            network = cyto.Cytoscape()
 
-        # network = cyto.Cytoscape(
-        #     id="cytoscape-network",
-        #     elements=make_elements(result),
-        #     stylesheet=make_stylesheet(result),
-        #     layout={
-        #         "name": "preset",
-        #     },
-        #     style={
-        #         "width": "100%",
-        #         "height": "550px",
-        #         "backgroundColor": "#ffffff",
-        #     },
-        # )
-
-        # data = OptimizationInput(supply_min=supply_min,)
-
+        return network

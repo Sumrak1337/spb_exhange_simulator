@@ -4,6 +4,7 @@ from dash import Dash, html, dcc, Input, Output
 import dash_cytoscape as cyto
 from ui.layout import build_layout
 from ui.callbacks.optimization import optimization_callback
+from ui.callbacks.visualization import visualization_callbacks
 
 def make_elements(result):
     elements = [
@@ -310,6 +311,7 @@ with open("input_data/input_data.json", "r", encoding="utf-8") as file:
 print("=" * 50)
 app.layout = build_layout(main_data)
 
+visualization_callbacks(app=app)
 optimization_callback(app=app, main_data=main_data)
 
 # @app.callback(

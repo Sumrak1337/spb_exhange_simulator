@@ -6,7 +6,7 @@
       "node_id": "НПЗ",
       "min": 0,
       "max": 10000,
-      "cost": 50
+      "cost": 100
     }
   ],
   "demand":
@@ -16,14 +16,14 @@
       "node_id": "Сбыт1",
       "min": 0,
       "max": 10000,
-      "price": 200
+      "price": 300
     },
     {
       "material_id": "productA",
       "node_id": "Сбыт2",
       "min": 0,
       "max": 10000,
-      "price": 200
+      "price": 500
     }
   ],
   "transport":
@@ -34,7 +34,7 @@
       "to_node_id": "Сбыт1",
       "min": 0,
       "max": 10000,
-      "cost": 10
+      "cost": 100
     },
     {
       "material_id": "productA",
@@ -42,7 +42,7 @@
       "to_node_id": "Сбыт2",
       "min": 0,
       "max": 10000,
-      "cost": 10
+      "cost": 100
     }
   ]
 }

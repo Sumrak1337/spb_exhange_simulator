@@ -302,7 +302,15 @@ def build_network():
                    "justifyContent": "space-between",
                    "alignItems": "flex-start",
                    "marginBottom": "10px", }, ),
-        html.Div(id="network-container", ), ],
+        html.Div(id="network-container", ),
+        html.Div(
+            id="node-info",
+            style={
+                "padding": "10px",
+                "border": "1px solid #ccc",
+                "marginTop": "10px"
+            }
+        )],
         style={"flex": "1", "backgroundColor": "white", "padding": "20px",
                "borderRadius": "10px", })
 
@@ -341,6 +349,7 @@ def build_supply_section(data: Dict[str, Any], entity: str):
                     min=item["min"],
                     max=item["max"],
                     value=[item["min"], item["max"]],
+                    step=100,
                     tooltip={
                         'placement': 'top',
                         'always_visible': False,
@@ -356,6 +365,7 @@ def build_supply_section(data: Dict[str, Any], entity: str):
                     type="number",
                     min=0,
                     max=1e4,
+                    value=item["cost"],
                     placeholder="Cost"
                 )
             ]),
@@ -388,6 +398,7 @@ def build_demand_section(data: Dict[str, Any], entity: str):
                     min=item["min"],
                     max=item["max"],
                     value=[item["min"], item["max"]],
+                    step=100,
                     tooltip={
                         'placement': 'top',
                         'always_visible': False,
@@ -403,6 +414,7 @@ def build_demand_section(data: Dict[str, Any], entity: str):
                     type="number",
                     min=0,
                     max=1e4,
+                    value=item["price"],
                     placeholder="Price",
                     style={"marginBottom": "15px"}
                 ),
