@@ -1,88 +1,16 @@
 import pandas as pd
-from dash import Dash, Input, Output, ALL, State, dcc
-import dash_cytoscape as cyto
+from dash import Dash, Input, Output, ALL, State
 import pyomo.environ as pyo
-import numpy as np
 
 from domain.data import OptimizationInput
 from typing import Dict, Any
 from optimization.model import LogisticsModel
 from optimization.solver import SolverManager
-
-def make_stylesheet(result):
-
-    stylesheet = [{
-        "selector": "node",
-        "style": {
-            "content": "data(label)",
-            "width": 70,
-            "height": 70,
-            "text-wrap": "wrap",
-            "font-size": "10px",
-            "text-valign": "center",
-            "text-halign": "center",
-            "color": "black",
-            "font-weight": "bold",
-            "label-font": "sans-serif"
-        },
-    }, {
-        "selector": '[type = "production"]',
-        "style": {
-            "background-color": "#2CA02C",
-            "shape": "rectangle",
-        },
-    }, {
-        "selector": '[type = "demand"]',
-        "style": {
-            "background-color": "#D62728",
-            "shape": "ellipse",
-        },
-    }, {
-        "selector": "edge",
-        "style": {
-            "curve-style": "bezier",
-            "target-arrow-shape": "triangle",
-            "line-color": "#9467BD",
-            "target-arrow-color": "#9467BD",
-            "arrow-scale": 0.75,
-            "label": "data(label)",
-            "font-size": "11px",
-            "text-background-color": "#ffffff",
-            "text-background-opacity": 0.5,
-            "text-background-padding": "3px",
-        },
-    }]
-
-    return stylesheet
-
-def make_elements(result):
-    # TODO: make via nodes, not variables
-    import random
-    random.seed(42)
-
-    elements = []
-    for i, ((s, n), value) in enumerate(result["supply"].items()):
-        elements.append({"data": {"id": f"{s}|{n}", "material": s, "label": n, "type": "production", "value": value}, "position": {"x": 0, "y": 100 * i}})
-    for i, ((s, n), value) in enumerate(result["demand"].items()):
-        elements.append({"data": {"id": f"{s}|{n}", "material": s, "label": n, "type": "demand", "value": value}, "position": {"x": 200, "y": 100 * i}})
-
-    for (s, n1, n2), value in result["transport"].items():
-        elements.append(
-            {
-                "data": {
-                    "id": f"{s}{n1}-{n2}",
-                    "source": f"{s}|{n1}",
-                    "target": f"{s}|{n2}",
-                    "label": f'{value:,.0f} тонн',
-                }
-            }
-        )
-
-    return elements
+from ui.utils import extract_solution, aggregate_for_visualization
 
 def optimization_callback(app: Dash, main_data: Dict[str, Any]):
     @app.callback(
-        Output("network-container", "children"),
+        Output("model-results-storage", "data"),
         Input({"type": "supply-range-slider", "s": ALL, "n": ALL}, "value"),
         Input({"type": "demand-range-slider", "s": ALL, "n": ALL}, "value"),
         Input({"type": "supply-number-input", "s": ALL, "n": ALL}, "value"),
@@ -91,7 +19,6 @@ def optimization_callback(app: Dash, main_data: Dict[str, Any]):
         State({"type": "demand-range-slider", "s": ALL, "n": ALL}, "id"),
         State({"type": "supply-number-input", "s": ALL, "n": ALL}, "id"),
         State({"type": "demand-number-input", "s": ALL, "n": ALL}, "id"),
-        Input("view-mode", "value")
     )
     def optimization(
         supply_bounds,
@@ -102,7 +29,6 @@ def optimization_callback(app: Dash, main_data: Dict[str, Any]):
         demand_bounds_ids,
         supply_cost_ids,
         demand_price_ids,
-        view_mode,
     ):
         # Data creation
         # TODO: to separate function
@@ -157,30 +83,13 @@ def optimization_callback(app: Dash, main_data: Dict[str, Any]):
         solver.solve(model=model)
 
         # Result extracting
-        result = {"supply": {k: pyo.value(v) for k, v in model.supply.items()},
-                  "demand": {k: pyo.value(v) for k, v in model.demand.items()},
-                  "transport": {k: pyo.value(v) for k, v in model.transport.items()},
-                  "distress_sale": {k: pyo.value(v) for k, v in
-                                    model.distress_sale.items()},
-                  "distress_purchase": {k: pyo.value(v) for k, v in
-                                        model.distress_purchase.items()}}
-
-        if view_mode == "network":
-            network = cyto.Cytoscape(
-                id="cytoscape-network",
-                elements=make_elements(result),
-                stylesheet=make_stylesheet(result),
-                layout={
-                    "name": "preset",
-                },
-                style={
-                    "width": "100%",
-                    "height": "550px",
-                    "backgroundColor": "#ffffff",
-                },
-            )
-        else:
-            # Future sankey realization
-            network = cyto.Cytoscape()
-
-        return network
+        result = extract_solution(model=model)
+        return aggregate_for_visualization(result=result)
+        result = {
+            "supply": [{"material_id": s, "node_id": n, "value": pyo.value(v)} for (s, n), v in model.supply.items()],
+            "demand": [{"material_id": s, "node_id": n, "value": pyo.value(v)} for (s, n), v in model.demand.items()],
+            "transport": [{"material_id": s, "from_node_id": n1, "to_node_id": n2, "value": pyo.value(v)} for (s, n1, n2), v in model.transport.items()],
+            "distress_sale": [{"material_id": s, "node_id": n, "value": pyo.value(v)} for (s, n), v in model.distress_sale.items()],
+            "distress_purchase": [{"material_id": s, "node_id": n, "value": pyo.value(v)} for (s, n), v in model.distress_purchase.items()],
+        }
+        return result
