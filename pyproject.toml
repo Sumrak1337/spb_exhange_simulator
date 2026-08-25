@@ -41,6 +41,7 @@ disable = [
     "C0114", # missing-module-docstring
     "C0115", # missing-class-docstring
     "C0116", # missing-function-docstring
+    "E0401", # import-error
 ]
 min-similarity-lines = 10
 ignore-paths = ["opora_pyomo_model/data/.*$"]
