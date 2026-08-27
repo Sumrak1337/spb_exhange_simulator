@@ -1,18 +1,14 @@
-import pyomo.environ as pyo
 import inspect
+from typing import List
+
+import pyomo.environ as pyo
 
 from domain.data import OptimizationInput
-from typing import List
+from optimization import constraints, objective, parameters, sets, variables
 from optimization.builder import Builder
 
-import optimization.sets as sets
-import optimization.parameters as parameters
-import optimization.constraints as constraints
-import optimization.variables as variables
-import optimization.objective as objectives
 
-
-class LogisticsModel(pyo.ConcreteModel):
+class LogisticsModel(pyo.ConcreteModel):  # pylint: disable=too-many-ancestors
     def __init__(self, data: OptimizationInput):
         super().__init__()
         self.data = data
@@ -44,16 +40,36 @@ class LogisticsModel(pyo.ConcreteModel):
             builder.build()
 
     def _add_set_builders(self) -> List[Builder]:
-        return [data_set(model=self) for _, data_set in inspect.getmembers(sets) if inspect.isclass(data_set)]
+        return [
+            data_set(model=self)
+            for _, data_set in inspect.getmembers(sets)
+            if inspect.isclass(data_set)
+        ]
 
     def _add_parameter_builders(self) -> List[Builder]:
-        return [parameter(model=self) for _, parameter in inspect.getmembers(parameters) if inspect.isclass(parameter)]
+        return [
+            parameter(model=self)
+            for _, parameter in inspect.getmembers(parameters)
+            if inspect.isclass(parameter)
+        ]
 
     def _add_variable_builders(self) -> List[Builder]:
-        return [variable(model=self) for _, variable in inspect.getmembers(variables) if inspect.isclass(variable)]
+        return [
+            variable(model=self)
+            for _, variable in inspect.getmembers(variables)
+            if inspect.isclass(variable)
+        ]
 
     def _add_constraint_builders(self) -> List[Builder]:
-        return [constraint(model=self) for _, constraint in inspect.getmembers(constraints) if inspect.isclass(constraint)]
+        return [
+            constraint(model=self)
+            for _, constraint in inspect.getmembers(constraints)
+            if inspect.isclass(constraint)
+        ]
 
     def _add_objective_builders(self) -> List[Builder]:
-        return [objective(model=self) for _, objective in inspect.getmembers(objectives) if inspect.isclass(objective)]
+        return [
+            obj(model=self)
+            for _, obj in inspect.getmembers(objective)
+            if inspect.isclass(obj)
+        ]

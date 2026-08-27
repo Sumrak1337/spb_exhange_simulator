@@ -1,41 +1,81 @@
-from dash import html, Dash, Output, Input
 import dash_cytoscape as cyto
-from ui.utils import make_stylesheet, make_elements
+from dash import Dash, Input, Output, html
+
+from ui.utils import make_stylesheet
+
 
 def visualization_callbacks(app: Dash):
     @app.callback(
         Output("node-info", "children"),
-        Input("cytoscape-network", "mouseoverNodeData")
+        Input("cytoscape-network", "mouseoverNodeData"),
     )
     def show_node_info(node_data):
         if not node_data:
             return ""
-        return [
-            html.B(node_data["label"]),
-            html.Br(),
-            # html.Div(f"Supply: {node_data["value"]}")
-            html.Div(f"{node_data}")
-        ]
 
+        return [
+            html.H3(node_data["label"]),
+            *[
+                html.Div(
+                    [
+                        html.B(f"{node['material_id']} "),
+                        html.Span(
+                            f"{node['value']}", style={"color": "green"}
+                        ),
+                        " || ",
+                        "Penalty purchase: ",
+                        html.Span(
+                            f"{node['value_distress_purchase']}",
+                            style={"color": "red"},
+                        ),
+                        " || ",
+                        "Penalty sale: ",
+                        html.Span(
+                            f"{node['value_distress_sale']}",
+                            style={"color": "red"},
+                        ),
+                    ]
+                )
+                for node in node_data["activity"]
+            ],
+        ]
 
     @app.callback(
         Output("network-container", "children"),
         Input("model-results-storage", "data"),
-        Input("view-mode", "value")
+        Input("view-mode", "value"),
     )
     def render_graph(result, view_mode):
         if result is None:
             return cyto.Cytoscape()
 
-        elements = [{"label": node["id"], "type": "supply" if node["supply"] else "demand", **node} for node in result["nodes"]]
+        elements = []
+        for node in result["nodes"]:
+            if node["supply"]:
+                activity = node["supply"]
+                node_type = "supply"
+            else:
+                activity = node["demand"]
+                node_type = "demand"
+            elements.append(
+                {
+                    "data": {
+                        "id": node["id"],
+                        "label": node["id"],
+                        "type": node_type,
+                        "activity": activity,
+                    }
+                }
+            )
+        elements.extend({"data": edge} for edge in result["edges"])
 
         if view_mode == "network":
             network = cyto.Cytoscape(
                 id="cytoscape-network",
                 elements=elements,
-                stylesheet=make_stylesheet(result),
+                stylesheet=make_stylesheet(),
                 layout={
-                    "name": "preset",
+                    "name": "breadthfirst",
                 },
                 style={
                     "width": "100%",
@@ -48,4 +88,3 @@ def visualization_callbacks(app: Dash):
             network = cyto.Cytoscape()
 
         return network
-

@@ -1,4 +1,4 @@
-from pyomo.environ import SolverFactory, ConcreteModel
+from pyomo.environ import ConcreteModel, SolverFactory
 
 
 class SolverManager:
@@ -14,5 +14,3 @@ class SolverManager:
         # TODO: fill
         solver = SolverFactory("highs")
         return solver
-
-
