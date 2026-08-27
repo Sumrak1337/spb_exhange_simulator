@@ -128,15 +128,24 @@ def build_network():
 
 
 def build_parameters(data: Dict[str, Any]):
-    return html.Div(
-        [
-            build_supply_section(data=data, entity="supply"),
-            build_demand_section(data=data, entity="demand"),
-            html.Hr(),
-            build_legend(),
+    return dcc.Tabs(
+        id="parameters-tabs",
+        children=[
+            dcc.Tab(
+                label="Параметры",
+                children=html.Div(
+                    [
+                        build_supply_section(data=data, entity="supply"),
+                        build_demand_section(data=data, entity="demand"),
+                        html.Hr(),
+                        build_legend(),
+                    ],
+                ),
+            ),
+            dcc.Tab(label="Биржа", value="spbe-parameters"),
         ],
         style={
-            "width": "300px",
+            "width": "700px",
             "backgroundColor": "white",
             "padding": "25px",
             "borderRadius": "10px",
