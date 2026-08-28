@@ -1,6 +1,9 @@
+import datetime
 from typing import Any, Dict
 
 from dash import dcc, html
+
+from ui.utils.config_data import NODE_COLORS, WEEKDAY_NAMES_RU, YEAR
 
 
 def build_layout(data: Dict[str, Any]):
@@ -40,7 +43,7 @@ def build_header():
         style={
             "padding": "20px 30px",
             "borderBottom": "1px solid #e2e8f0",
-            "backgroundColor": "white",
+            "backgroundColor": "#f2f2f2",
         },
     )
 
@@ -115,12 +118,13 @@ def build_network():
                     "padding": "10px",
                     "border": "1px solid #ccc",
                     "marginTop": "10px",
+                    "backgroundColor": "white",
                 },
             ),
         ],
         style={
             "flex": "1",
-            "backgroundColor": "white",
+            "backgroundColor": "#f2f2f2",
             "padding": "20px",
             "borderRadius": "10px",
         },
@@ -143,6 +147,9 @@ def build_parameters(data: Dict[str, Any]):
                 ),
             ),
             dcc.Tab(label="Биржа", value="spbe-parameters"),
+            dcc.Tab(
+                label="Календарь", children=build_calendar_layout(year=YEAR)
+            ),
         ],
         style={
             "width": "700px",
@@ -163,7 +170,7 @@ def build_supply_section(data: Dict[str, Any], entity: str):
                         f"{item['material_id']} | {item['node_id']}",
                         style={
                             "textAlign": "left",
-                            "color": "#475569",
+                            "color": "#f2f2f2",
                             "marginBottom": "15px",
                         },
                     ),
@@ -176,6 +183,10 @@ def build_supply_section(data: Dict[str, Any], entity: str):
                         min=item["min"],
                         max=item["max"],
                         value=[item["min"], item["max"]],
+                        marks={
+                            i: {"label": str(i), "style": {"color": "#f2f2f2"}}
+                            for i in range(item["min"], item["max"] + 1, 1000)
+                        },
                         step=100,
                         tooltip={
                             "placement": "top",
@@ -201,9 +212,10 @@ def build_supply_section(data: Dict[str, Any], entity: str):
 
     return html.Div(
         [
-            html.H2(entity.capitalize()),
+            html.H2(entity.capitalize(), style={"color": "#f2f2f2"}),
             *rows,
-        ]
+        ],
+        style={"backgroundColor": NODE_COLORS["supply"]},
     )
 
 
@@ -217,7 +229,7 @@ def build_demand_section(data: Dict[str, Any], entity: str):
                         f"{item['material_id']} | {item['node_id']}",
                         style={
                             "textAlign": "left",
-                            "color": "#475569",
+                            "color": "#0c2a45",
                             "marginBottom": "15px",
                         },
                     ),
@@ -256,9 +268,10 @@ def build_demand_section(data: Dict[str, Any], entity: str):
 
     return html.Div(
         [
-            html.H2(entity.capitalize()),
+            html.H2(entity.capitalize(), style={"color": "#0c2a45"}),
             *rows,
-        ]
+        ],
+        style={"backgroundColor": NODE_COLORS["demand"]},
     )
 
 
@@ -301,3 +314,38 @@ def build_storage():
         dcc.Store(id="model-results-storage", storage_type="memory"),
         dcc.Store(id="colors", storage_type="memory"),
     ]
+
+
+def build_calendar_layout(year: int = None, month: int = None) -> html.Div:
+    today = datetime.date.today()
+    year = year or today.year
+    month = month or today.month
+
+    return html.Div(
+        [
+            dcc.Store(id="calendar-state", storage_type="session"),
+            dcc.Store(id="current-month", data={"year": year, "month": month}),
+            html.Div(
+                [
+                    html.Button(
+                        "◀", id="prev-month-btn", className="cal-nav-btn"
+                    ),
+                    html.H3(id="month-title", className="cal-month-title"),
+                    html.Button(
+                        "▶", id="next-month-btn", className="cal-nav-btn"
+                    ),
+                ],
+                className="cal-nav",
+            ),
+            html.Div(
+                [
+                    html.Div(wd, className="cal-weekday-header")
+                    for wd in WEEKDAY_NAMES_RU
+                ],
+                className="cal-weekdays-row",
+            ),
+            html.Div(id="calendar-grid", className="cal-grid"),
+            dcc.Store(id="calendar-output", storage_type="session"),
+        ],
+        className="calendar-wrapper",
+    )

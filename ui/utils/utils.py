@@ -4,7 +4,7 @@ import pandas as pd
 import pyomo.environ as pyo
 
 from domain.data import OptimizationInput
-from ui.utils.config_data import PRODUCT_COLORS
+from ui.utils.config_data import NODE_COLORS, PRODUCT_COLORS
 
 
 def data_creation(
@@ -98,7 +98,7 @@ def make_stylesheet() -> List[Dict[str, Any]]:
                 "font-size": "10px",
                 "text-valign": "center",
                 "text-halign": "center",
-                "color": "black",
+                "color": "#0c2a45",
                 "font-weight": "bold",
                 "label-font": "sans-serif",
             },
@@ -106,7 +106,7 @@ def make_stylesheet() -> List[Dict[str, Any]]:
         {
             "selector": '[type = "supply"]',
             "style": {
-                "background-color": "#004596",
+                "background-color": NODE_COLORS["supply"],
                 "color": "white",
                 "shape": "rectangle",
             },
@@ -114,7 +114,7 @@ def make_stylesheet() -> List[Dict[str, Any]]:
         {
             "selector": '[type = "demand"]',
             "style": {
-                "background-color": "#e65907",
+                "background-color": NODE_COLORS["demand"],
                 "shape": "ellipse",
             },
         },
@@ -238,8 +238,8 @@ def aggregate_for_visualization(result: Dict[str, pd.DataFrame]):
     edges_data = [
         {
             "id": f"{flow['material_id']}"
-                  f"|{flow['from_node_id']}"
-                  f"|{flow['to_node_id']}",
+            f"|{flow['from_node_id']}"
+            f"|{flow['to_node_id']}",
             "product": flow["material_id"],
             "source": flow["from_node_id"],
             "target": flow["to_node_id"],
