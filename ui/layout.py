@@ -63,8 +63,8 @@ def build_kpi_bar():
 def build_main_content(data: Dict[str, Any]):
     return html.Div(
         [
-            build_network(),
             build_parameters(data=data),
+            build_network(),
         ],
         style={
             "display": "flex",
@@ -146,7 +146,7 @@ def build_parameters(data: Dict[str, Any]):
                     ],
                 ),
             ),
-            dcc.Tab(label="Биржа", value="spbe-parameters"),
+            dcc.Tab(label="Биржа", children=build_spbe_layout(data=data)),
             dcc.Tab(
                 label="Календарь", children=build_calendar_layout(year=YEAR)
             ),
@@ -170,7 +170,7 @@ def build_supply_section(data: Dict[str, Any], entity: str):
                         f"{item['material_id']} | {item['node_id']}",
                         style={
                             "textAlign": "left",
-                            "color": "#f2f2f2",
+                            # "color": "#f2f2f2",
                             "marginBottom": "15px",
                         },
                     ),
@@ -183,10 +183,10 @@ def build_supply_section(data: Dict[str, Any], entity: str):
                         min=item["min"],
                         max=item["max"],
                         value=[item["min"], item["max"]],
-                        marks={
-                            i: {"label": str(i), "style": {"color": "#f2f2f2"}}
-                            for i in range(item["min"], item["max"] + 1, 1000)
-                        },
+                        # marks={
+                        #     i: {"label": str(i), "style": {"color": "#f2f2f2"}}
+                        #     for i in range(item["min"], item["max"] + 1, 1000)
+                        # },
                         step=100,
                         tooltip={
                             "placement": "top",
@@ -212,10 +212,10 @@ def build_supply_section(data: Dict[str, Any], entity: str):
 
     return html.Div(
         [
-            html.H2(entity.capitalize(), style={"color": "#f2f2f2"}),
+            html.H2(entity.capitalize()),#, style={"color": "#f2f2f2"}),
             *rows,
         ],
-        style={"backgroundColor": NODE_COLORS["supply"]},
+        # style={"backgroundColor": NODE_COLORS["supply"]},
     )
 
 
@@ -349,3 +349,72 @@ def build_calendar_layout(year: int = None, month: int = None) -> html.Div:
         ],
         className="calendar-wrapper",
     )
+
+def build_spbe_layout(data: Dict[str, Any]):
+    return html.Div(
+        [
+            build_spbe_base(data=data),
+            html.Hr(),
+            build_spbe_sales(data=data),
+        ],
+    )
+
+
+def build_spbe_base(data):
+    # TODO: add selector
+    rows = []
+    for item in data["spbe_material_data"]:
+        rows.append(html.Div(
+            [
+                html.Div(
+                    [
+                        html.Div(f"{item['spbe_material']}|{item['spbe_supplier']}"),
+                        html.H4("Процент"),
+                        dcc.Slider(
+                            id={"type": "spbe-percent", "s": item["spbe_material"], "n": item["spbe_supplier"]},
+                            min=0,
+                            max=100,
+                            step=0.1,
+                        ),
+                        html.H4("Множитель"),
+                        dcc.Input(id={
+                            "type": "spbe-factor",
+                            "s": item["spbe_material"],
+                            "n": item["spbe_supplier"],
+                        },
+                            type="number",
+                            min=0,
+                            max=10,
+                            step=0.01,
+                            value=1,
+                        ),
+                        html.H4("Размер лота"),
+                        dcc.Input(id={
+                            "type": "spbe-lot-size",
+                            "s": item["spbe_material"],
+                            "n": item["spbe_supplier"],
+                        },
+                            type="number",
+                            min=0,
+                            max=100,
+                            value=60,
+                        ),
+                        html.H4("Статнагрузка"),
+
+                    ]
+                ),
+            ],
+            style={
+                "display": "center",
+                "gap": "100px",
+                # "padding": "20px 30px",
+                "minHeight": "1000px",
+            }
+        )
+        )
+    return html.Div([html.H3("База"), *rows])
+
+
+def build_spbe_sales(data):
+    rows = []
+    return html.Div([html.H3("Продажи")])

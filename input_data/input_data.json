@@ -66,5 +66,12 @@
       "max": 10000,
       "cost": 100
     }
+  ],
+  "spbe_material_data":
+  [
+    {
+      "spbe_material": "productA",
+      "spbe_supplier": "НПЗ"
+    }
   ]
 }
