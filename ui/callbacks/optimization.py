@@ -4,7 +4,7 @@ from dash import ALL, Dash, Input, Output, State
 
 from optimization.model import LogisticsModel
 from optimization.solver import SolverManager
-from ui.utils import (
+from ui.utils.utils import (
     aggregate_for_visualization,
     data_creation,
     extract_solution,
@@ -14,6 +14,7 @@ from ui.utils import (
 def optimization_callback(app: Dash, main_data: Dict[str, Any]):
     @app.callback(
         Output("model-results-storage", "data"),
+        Output("colors", "data"),
         Input({"type": "supply-range-slider", "s": ALL, "n": ALL}, "value"),
         Input({"type": "demand-range-slider", "s": ALL, "n": ALL}, "value"),
         Input({"type": "supply-number-input", "s": ALL, "n": ALL}, "value"),

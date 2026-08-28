@@ -9,7 +9,7 @@ def build_layout(data: Dict[str, Any]):
             build_header(),
             # *build_kpi_bar(),
             build_main_content(data=data),
-            build_storage(),
+            *build_storage(),
         ],
         style={
             "fontFamily": "Arial, sans-serif",
@@ -297,4 +297,7 @@ def build_legend():
 
 
 def build_storage():
-    return dcc.Store(id="model-results-storage", storage_type="memory")
+    return [
+        dcc.Store(id="model-results-storage", storage_type="memory"),
+        dcc.Store(id="colors", storage_type="memory"),
+    ]

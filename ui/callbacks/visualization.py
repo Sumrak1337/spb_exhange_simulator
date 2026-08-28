@@ -1,7 +1,7 @@
 import dash_cytoscape as cyto
 from dash import Dash, Input, Output, html
 
-from ui.utils import make_stylesheet
+from ui.utils.utils import make_stylesheet
 
 
 def visualization_callbacks(app: Dash):
@@ -43,9 +43,10 @@ def visualization_callbacks(app: Dash):
     @app.callback(
         Output("network-container", "children"),
         Input("model-results-storage", "data"),
+        Input("colors", "data"),
         Input("view-mode", "value"),
     )
-    def render_graph(result, view_mode):
+    def render_graph(result, colors, view_mode):
         if result is None:
             return cyto.Cytoscape()
 
@@ -67,7 +68,10 @@ def visualization_callbacks(app: Dash):
                     }
                 }
             )
-        elements.extend({"data": edge} for edge in result["edges"])
+        elements.extend(
+            {"data": {"color": colors[edge["product"]], **edge}}
+            for edge in result["edges"]
+        )
 
         if view_mode == "network":
             network = cyto.Cytoscape(

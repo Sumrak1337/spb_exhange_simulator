@@ -4,6 +4,7 @@ import pandas as pd
 import pyomo.environ as pyo
 
 from domain.data import OptimizationInput
+from ui.utils.config_data import PRODUCT_COLORS
 
 
 def data_creation(
@@ -105,14 +106,15 @@ def make_stylesheet() -> List[Dict[str, Any]]:
         {
             "selector": '[type = "supply"]',
             "style": {
-                "background-color": "#2CA02C",
+                "background-color": "#004596",
+                "color": "white",
                 "shape": "rectangle",
             },
         },
         {
             "selector": '[type = "demand"]',
             "style": {
-                "background-color": "#D62728",
+                "background-color": "#e65907",
                 "shape": "ellipse",
             },
         },
@@ -121,8 +123,8 @@ def make_stylesheet() -> List[Dict[str, Any]]:
             "style": {
                 "curve-style": "bezier",
                 "target-arrow-shape": "triangle",
-                "line-color": "#9467BD",
-                "target-arrow-color": "#9467BD",
+                "line-color": "data(color)",
+                "target-arrow-color": "data(color)",
                 "arrow-scale": 0.75,
                 "label": "data(label)",
                 "font-size": "11px",
@@ -205,6 +207,12 @@ def extract_solution(model: pyo.ConcreteModel) -> Dict[str, pd.DataFrame]:
 
 def aggregate_for_visualization(result: Dict[str, pd.DataFrame]):
     all_nodes = result["distress_sale"].node_id.unique()
+    all_products = sorted(result["distress_sale"].material_id.unique())
+
+    colors = {
+        product: PRODUCT_COLORS[i % len(PRODUCT_COLORS)]
+        for i, product in enumerate(all_products)
+    }
 
     distress = result["distress_purchase"].merge(
         result["distress_sale"],
@@ -229,6 +237,10 @@ def aggregate_for_visualization(result: Dict[str, pd.DataFrame]):
 
     edges_data = [
         {
+            "id": f"{flow['material_id']}"
+                  f"|{flow['from_node_id']}"
+                  f"|{flow['to_node_id']}",
+            "product": flow["material_id"],
             "source": flow["from_node_id"],
             "target": flow["to_node_id"],
             "label": f"{flow['value']}",
@@ -236,4 +248,4 @@ def aggregate_for_visualization(result: Dict[str, pd.DataFrame]):
         for flow in result["transport"].to_dict(orient="records")
     ]
 
-    return {"nodes": nodes_data, "edges": edges_data}
+    return {"nodes": nodes_data, "edges": edges_data}, colors
